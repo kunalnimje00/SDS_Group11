@@ -1,28 +1,17 @@
-﻿import { Geist, Geist_Mono } from "next/font/google";
+import { AppProviders } from "./providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata = {
-  title: "Smart Cafeteria",
-  description: "College cafeteria ordering system",
+  title: "Kantin — Campus Food, Made Easy",
+  description: "College cafeteria ordering system & student dashboard",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en">
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }
