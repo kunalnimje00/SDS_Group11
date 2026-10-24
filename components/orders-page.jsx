@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ClipboardList } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { destinations } from "@/lib/demo-data";
 import { OrderCard } from "./order-ui";
 import { EmptyState, PageHeading } from "./ui";

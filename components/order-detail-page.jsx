@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Clock3, MapPin, ReceiptText, UtensilsCrossed } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { demoOrderEvents, destinations } from "@/lib/demo-data";
 import { formatDateTime, formatINR } from "@/lib/format";
 import { OrderStatusStepper, OrderTimelineNote } from "./order-ui";

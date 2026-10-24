@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, CircleUserRound, LogIn, LogOut, CheckCircle, Shield } from "lucide-react";
-import { useKantin } from "@/app/providers";
-import { supabase } from "@/lib/supabase";
+import { useKantin } from "@/app/kantin-context";
+import { supabase, supabaseConfigError } from "@/lib/supabase";
 import { PageHeading } from "./ui";
 
 export function ProfilePage() {
@@ -20,6 +20,8 @@ export function ProfilePage() {
     setStatusMsg("");
 
     try {
+      if (!supabase) throw new Error(supabaseConfigError);
+
       const { error } = await supabase.auth.updateUser({
         data: { display_name: displayName.trim() },
       });

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Minus, Plus, ShoppingBasket, Trash2, Utensils } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { formatINR } from "@/lib/format";
 import { EmptyState, PageHeading, FoodPlaceholder } from "./ui";
 
