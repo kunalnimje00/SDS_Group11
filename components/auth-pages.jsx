@@ -8,6 +8,8 @@ import { useKantin } from "@/app/kantin-context";
 
 const COEP_EMAIL_DOMAIN = "@coeptech.ac.in";
 const COEP_EMAIL_ERROR = "Enter your COEP email name before the fixed @coeptech.ac.in suffix.";
+const MIN_PASSWORD_LENGTH = 12;
+const PASSWORD_LENGTH_ERROR = `Use a password with at least ${MIN_PASSWORD_LENGTH} characters.`;
 
 function isValidCoepUsername(username) {
   return /^[a-zA-Z0-9._%+-]+$/.test(username.trim());
@@ -209,6 +211,11 @@ export function ForgotPasswordPage() {
     setErrorMsg("");
     setSuccessMsg("");
 
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setErrorMsg(PASSWORD_LENGTH_ERROR);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg("The passwords do not match.");
       return;
@@ -257,6 +264,7 @@ export function ForgotPasswordPage() {
             required
           />
           <label className="field-label" htmlFor="recovery-password">New password</label>
+          <p className="auth-description">Use at least {MIN_PASSWORD_LENGTH} characters.</p>
           <input
             className="text-input"
             id="recovery-password"
@@ -265,7 +273,7 @@ export function ForgotPasswordPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
-            minLength={6}
+            minLength={MIN_PASSWORD_LENGTH}
           />
           <label className="field-label" htmlFor="recovery-password-confirm">Confirm new password</label>
           <input
@@ -276,7 +284,7 @@ export function ForgotPasswordPage() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             required
-            minLength={6}
+            minLength={MIN_PASSWORD_LENGTH}
           />
           {errorMsg && <p className="inline-error" role="alert">{errorMsg}</p>}
           {successMsg && <p className="inline-info" role="status">{successMsg}</p>}
@@ -316,6 +324,11 @@ export function RegisterPage() {
 
     if (!isValidCoepUsername(email)) {
       setErrorMsg(COEP_EMAIL_ERROR);
+      return;
+    }
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setErrorMsg(PASSWORD_LENGTH_ERROR);
       return;
     }
 
@@ -421,6 +434,7 @@ export function RegisterPage() {
         <label className="field-label" htmlFor="register-password">
           Password
         </label>
+        <p className="auth-description">Use at least {MIN_PASSWORD_LENGTH} characters.</p>
         <input
           className="text-input"
           id="register-password"
@@ -430,6 +444,7 @@ export function RegisterPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={MIN_PASSWORD_LENGTH}
         />
 
         {errorMsg && (
