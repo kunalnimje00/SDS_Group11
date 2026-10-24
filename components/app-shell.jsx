@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BookOpen, ChevronRight, CircleUserRound, ClipboardList, Menu, ShoppingBasket, UtensilsCrossed, X, LogIn } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 
 const navigation = [
   { href: "/", label: "Home", icon: BookOpen },

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Clock3, Plus, Search, Settings, UtensilsCrossed, X } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { MenuItemCard } from "./menu-item-card";
 import { DemoNotice, EmptyState, PageHeading } from "./ui";
 

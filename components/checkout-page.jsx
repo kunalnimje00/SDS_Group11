@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Check, ChevronDown, Clock3, MapPin, ShoppingBag } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { destinations } from "@/lib/demo-data";
 import { formatINR } from "@/lib/format";
 import { EmptyState, PageHeading } from "./ui";
@@ -85,7 +85,7 @@ export function CheckoutPage() {
               <span className="checkout-step">01</span>
               <div>
                 <h2>Campus Pickup Point</h2>
-                <p>Choose where you'd like your order delivered or picked up.</p>
+                <p>Choose where you&apos;d like your order delivered or picked up.</p>
               </div>
             </div>
             <label className="field-label" htmlFor="destination">

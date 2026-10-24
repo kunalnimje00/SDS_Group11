@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { CafeCard } from "./cafe-card";
 import { EmptyState, PageHeading } from "./ui";
 

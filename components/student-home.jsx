@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Clock3, Sparkles, UtensilsCrossed } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { CafeCard } from "./cafe-card";
 import { MenuItemCard } from "./menu-item-card";
 import { DemoNotice, SectionHeading } from "./ui";
@@ -40,7 +40,7 @@ export function StudentHome() {
             A little lunch.<br />
             <span>A lot easier.</span>
           </h2>
-          <p>Explore today's campus cafe menus and place your meal orders without the crowd.</p>
+          <p>Explore today&apos;s campus cafe menus and place your meal orders without the crowd.</p>
           <Link className="button button-primary" href={`/cafes/${cafe.id}`}>
             Explore the menu <ArrowRight size={17} />
           </Link>

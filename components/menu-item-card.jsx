@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Clock3, Check } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { formatINR } from "@/lib/format";
 import { FoodPlaceholder } from "./ui";
 
