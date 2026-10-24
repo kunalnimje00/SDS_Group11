@@ -121,13 +121,14 @@ export function AppProviders({ children }) {
     return data;
   }, []);
 
-  const signUp = useCallback(async (email, password, displayName) => {
+  const signUp = useCallback(async (email, password, displayName, cafeName) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           display_name: displayName,
+          ...(cafeName ? { cafe_signup: true, cafe_name: cafeName } : {}),
         },
       },
     });

@@ -416,6 +416,213 @@ h3 { font-size: 1rem; line-height: 1.3; font-weight: 600; }
 .auth-note-card svg { flex: 0 0 auto; color: var(--mint); }
 .auth-legal-note { margin: 13px 0 0; color: #728077; text-align: center; font-size: 9px; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   CAFETERIA DASHBOARD STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Password visibility toggle --- */
+.password-field-wrap { position: relative; }
+.password-field-wrap .text-input { padding-right: 42px; }
+.password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: grid; width: 32px; height: 32px; place-items: center; color: #738078; border: 0; border-radius: 7px; background: transparent; cursor: pointer; transition: color .16s ease; }
+.password-toggle:hover { color: var(--mint); }
+
+/* --- Access pending page --- */
+.access-pending-icon { display: grid; width: 68px; height: 68px; place-items: center; margin: 0 auto 18px; color: var(--amber); border: 1px solid rgba(228, 186, 119, .2); border-radius: 20px; background: rgba(228, 186, 119, .06); }
+.access-pending-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+/* --- Overview summary cards --- */
+.cafe-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 13px; }
+.cafe-stat-card { position: relative; overflow: hidden; padding: 17px 18px 14px; border: 1px solid var(--border); border-radius: 15px; background: #111c16; transition: border-color .18s ease, transform .18s ease; }
+.cafe-stat-card:hover { border-color: rgba(145, 212, 168, .22); transform: translateY(-1px); }
+.cafe-stat-card-accent { border-color: rgba(145, 212, 168, .18); background: linear-gradient(135deg, rgba(145, 212, 168, .04), transparent 60%); }
+.cafe-stat-icon { display: grid; width: 34px; height: 34px; place-items: center; margin-bottom: 11px; color: var(--mint); border: 1px solid rgba(145, 212, 168, .15); border-radius: 10px; background: rgba(145, 212, 168, .06); }
+.cafe-stat-card .stat-value { margin: 0 0 2px; font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -.04em; }
+.cafe-stat-card .stat-label { margin: 0; color: var(--muted); font-size: 10px; }
+.cafe-stat-card-warn .cafe-stat-icon { color: var(--amber); border-color: rgba(228, 186, 119, .18); background: rgba(228, 186, 119, .06); }
+.cafe-stat-card-warn { border-color: rgba(228, 186, 119, .15); }
+
+/* --- Order queue layout --- */
+.order-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.order-queue-column { display: flex; flex-direction: column; gap: 10px; }
+.queue-column-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px; border: 1px solid var(--border); border-radius: 12px; background: #0f1913; }
+.queue-column-header h3 { margin: 0; font-size: 13px; }
+.queue-column-header .nav-count { min-width: 24px; height: 22px; font-size: 10px; }
+.queue-column-body { display: flex; flex-direction: column; gap: 9px; min-height: 120px; }
+
+/* --- Order cards (cafe dashboard version) --- */
+.cafe-order-card { padding: 14px 15px 12px; border: 1px solid var(--border); border-radius: 13px; background: #111c16; transition: border-color .17s ease; }
+.cafe-order-card:hover { border-color: rgba(145, 212, 168, .22); }
+.cafe-order-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cafe-order-card-header .order-number { margin: 0 0 2px; }
+.cafe-order-customer { margin: 0; font-size: 13px; font-weight: 600; }
+.cafe-order-time { color: #839188; font-size: 9px; }
+.cafe-order-items { display: grid; gap: 5px; margin-bottom: 11px; padding-bottom: 10px; border-bottom: 1px solid rgba(177, 204, 185, .08); }
+.cafe-order-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10px; }
+.cafe-order-item-row .item-name { color: #c8d5cb; }
+.cafe-order-item-row .item-qty { color: #839188; white-space: nowrap; }
+.cafe-order-item-row .item-price { color: #b0bdb4; white-space: nowrap; font-weight: 600; }
+.cafe-order-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.cafe-order-total > span:first-child { color: #839188; font-size: 10px; }
+.cafe-order-total > strong { color: var(--mint-bright); font-family: 'Space Grotesk', sans-serif; font-size: 14px; }
+.cafe-order-actions { display: flex; gap: 7px; }
+.cafe-order-actions .button { flex: 1; min-height: 34px; font-size: 10px; }
+
+/* Status-specific action buttons */
+.button-accept { color: #0a140d; background: var(--mint); }
+.button-accept:hover { background: var(--mint-bright); }
+.button-reject { color: #e5aaa1; border-color: rgba(224, 140, 130, .22); background: rgba(224, 140, 130, .07); }
+.button-reject:hover { color: #efb7ac; border-color: rgba(224, 140, 130, .35); background: rgba(224, 140, 130, .12); }
+.button-danger { color: #e5aaa1; border: 1px solid rgba(224, 140, 130, .22); background: rgba(224, 140, 130, .07); }
+.button-danger:hover { border-color: rgba(224, 140, 130, .35); background: rgba(224, 140, 130, .12); }
+.button-warning { color: #dec798; border: 1px solid rgba(228, 186, 119, .2); background: rgba(228, 186, 119, .06); }
+.button-warning:hover { border-color: rgba(228, 186, 119, .35); background: rgba(228, 186, 119, .1); }
+
+/* --- Cafe menu management grid --- */
+.cafe-menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 13px; }
+.cafe-menu-card { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 15px; background: #111c16; transition: border-color .17s ease, transform .17s ease; }
+.cafe-menu-card:hover { border-color: rgba(145, 212, 168, .22); transform: translateY(-1px); }
+.cafe-menu-card-header { display: flex; align-items: center; gap: 11px; padding: 13px 14px; border-bottom: 1px solid rgba(177, 204, 185, .07); }
+.cafe-menu-card-header .food-placeholder-small { flex: 0 0 auto; }
+.cafe-menu-card-info { flex: 1; min-width: 0; }
+.cafe-menu-card-info h3 { margin: 0 0 3px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cafe-menu-card-info .menu-item-price { font-size: 11px; }
+.cafe-menu-card-body { padding: 11px 14px 13px; }
+.cafe-menu-card-body p { margin: 0 0 9px; color: #8e9b92; font-size: 10px; }
+.cafe-menu-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.cafe-menu-card-meta .tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; color: #a9b9ac; border: 1px solid rgba(177, 204, 185, .1); border-radius: 6px; background: rgba(255, 255, 255, .02); font-size: 8px; font-weight: 600; }
+.cafe-menu-card-actions { display: flex; gap: 6px; padding: 0 14px 13px; }
+.cafe-menu-card-actions .button { flex: 1; }
+
+/* Availability toggle */
+.availability-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 10px; color: #9ba99f; }
+.toggle-track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: #2a3830; border: 1px solid rgba(177, 204, 185, .15); transition: background .2s ease, border-color .2s ease; }
+.toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #718078; transition: transform .2s ease, background .2s ease; }
+.toggle-active .toggle-track { background: rgba(145, 212, 168, .15); border-color: rgba(145, 212, 168, .3); }
+.toggle-active .toggle-track::after { transform: translateX(16px); background: var(--mint); }
+
+/* --- Inventory table --- */
+.inventory-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.inventory-table th { padding: 10px 13px; color: #738078; border-bottom: 1px solid var(--border); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-align: left; }
+.inventory-table td { padding: 11px 13px; border-bottom: 1px solid rgba(177, 204, 185, .06); font-size: 11px; vertical-align: middle; }
+.inventory-table tr:hover td { background: rgba(145, 212, 168, .02); }
+.inventory-table .item-cell { display: flex; align-items: center; gap: 10px; }
+.stock-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 700; }
+.stock-ok { color: #a8d7b1; border: 1px solid rgba(145, 212, 168, .15); background: rgba(145, 212, 168, .06); }
+.stock-low { color: #dec798; border: 1px solid rgba(228, 186, 119, .18); background: rgba(228, 186, 119, .06); }
+.stock-out { color: #e5aaa1; border: 1px solid rgba(224, 140, 130, .18); background: rgba(224, 140, 130, .06); }
+.stock-unlimited { color: #9ba99f; border: 1px solid var(--border); background: rgba(255, 255, 255, .02); }
+.stock-input { width: 72px; min-height: 32px; padding: 0 8px; text-align: center; color: #e4ece5; border: 1px solid var(--border-strong); border-radius: 7px; outline: 0; background: #0d1711; font-size: 11px; }
+.stock-input:focus { border-color: rgba(145, 212, 168, .45); box-shadow: 0 0 0 3px rgba(145, 212, 168, .06); }
+
+/* --- Hours editor --- */
+.hours-editor { display: grid; gap: 10px; }
+.hours-day-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: #0f1913; }
+.hours-day-label { min-width: 90px; font-size: 12px; font-weight: 600; }
+.hours-day-closed { color: var(--red); font-size: 10px; font-weight: 600; }
+.hours-shifts { display: flex; flex-wrap: wrap; gap: 7px; flex: 1; }
+.hours-shift { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid rgba(145, 212, 168, .12); border-radius: 8px; background: rgba(145, 212, 168, .04); font-size: 10px; color: #c8d5cb; }
+.hours-shift-input { width: 78px; min-height: 30px; padding: 0 6px; text-align: center; color: #e4ece5; border: 1px solid var(--border-strong); border-radius: 6px; outline: 0; background: #0d1711; font-size: 10px; }
+.hours-shift-input:focus { border-color: rgba(145, 212, 168, .45); }
+.hours-day-actions { display: flex; gap: 5px; margin-left: auto; }
+
+/* --- Analytics cards --- */
+.analytics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; }
+.analytics-card { padding: 18px; border: 1px solid var(--border); border-radius: 15px; background: #111c16; }
+.analytics-card h3 { margin: 0 0 14px; font-size: 14px; }
+.analytics-bar-chart { display: grid; gap: 8px; }
+.analytics-bar-row { display: flex; align-items: center; gap: 10px; }
+.analytics-bar-label { min-width: 100px; color: #9ba99f; font-size: 10px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.analytics-bar-track { flex: 1; height: 22px; border-radius: 6px; background: rgba(145, 212, 168, .06); overflow: hidden; }
+.analytics-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(145, 212, 168, .25), var(--mint-deep)); transition: width .4s ease; }
+.analytics-bar-value { min-width: 36px; color: #c8d5cb; font-size: 10px; font-weight: 700; }
+
+/* --- Modal / Dialog --- */
+.modal-overlay { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(1, 6, 3, .72); backdrop-filter: blur(4px); animation: modal-bg-in .22s ease; }
+@keyframes modal-bg-in { from { opacity: 0; } to { opacity: 1; } }
+.modal-card { width: min(100%, 440px); max-height: calc(100vh - 40px); overflow-y: auto; padding: 22px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--panel); box-shadow: 0 24px 64px rgba(0, 0, 0, .3); animation: modal-card-in .24s ease; }
+@keyframes modal-card-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-card h2 { margin: 0 0 6px; font-size: 18px; }
+.modal-card > p { margin: 0 0 18px; color: var(--muted); font-size: 11px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.modal-form { display: grid; gap: 12px; }
+.modal-form .field-label { margin-bottom: 5px; }
+
+/* --- Toast notification --- */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 80; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 11px 16px; min-width: 260px; max-width: 400px; border-radius: 12px; background: var(--panel-raised); border: 1px solid var(--border-strong); box-shadow: 0 12px 36px rgba(0, 0, 0, .22); font-size: 11px; font-weight: 500; pointer-events: auto; animation: toast-in .3s ease; }
+.toast-success { color: #a8d7b1; border-color: rgba(145, 212, 168, .22); }
+.toast-success svg { color: var(--mint); }
+.toast-error { color: #e5aaa1; border-color: rgba(224, 140, 130, .22); }
+.toast-error svg { color: var(--red); }
+.toast-info { color: #c0d8c6; border-color: rgba(145, 212, 168, .15); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Tab bar (for order status filters) --- */
+.tab-bar { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: #0d1711; overflow-x: auto; }
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-item { flex: 0 0 auto; min-height: 34px; padding: 0 12px; color: #8d9b92; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; font-size: 10px; font-weight: 600; white-space: nowrap; transition: color .16s ease, background .16s ease, border-color .16s ease; }
+.tab-item:hover { color: #c8d5cb; background: rgba(255, 255, 255, .03); }
+.tab-item-active { color: var(--mint-bright); border-color: rgba(145, 212, 168, .2); background: rgba(145, 212, 168, .08); }
+
+/* --- Date picker styled --- */
+.date-select { min-height: 38px; padding: 0 10px; color: #dbe4dc; border: 1px solid var(--border-strong); border-radius: 9px; outline: 0; background: #0d1711; font-size: 11px; cursor: pointer; }
+.date-select:focus { border-color: rgba(145, 212, 168, .45); box-shadow: 0 0 0 3px rgba(145, 212, 168, .06); }
+
+/* --- Waiting time indicator --- */
+.wait-time { display: inline-flex; align-items: center; gap: 4px; color: #839188; font-size: 9px; }
+.wait-time svg { color: var(--amber); }
+.wait-time-urgent { color: var(--red); }
+.wait-time-urgent svg { color: var(--red); }
+
+/* --- Cafe overview sections --- */
+.overview-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr); gap: 14px; }
+.overview-section { border: 1px solid var(--border); border-radius: 15px; background: #111c16; padding: 16px 17px; }
+.overview-section h3 { margin: 0 0 13px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.overview-section h3 svg { color: var(--mint); }
+.overview-list { display: grid; gap: 8px; }
+.overview-list-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(177, 204, 185, .06); font-size: 11px; }
+.overview-list-item:last-child { border-bottom: 0; }
+.cafe-open-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+.cafe-open-badge-open { color: #a8d7b1; border: 1px solid rgba(145, 212, 168, .18); background: rgba(145, 212, 168, .06); }
+.cafe-open-badge-closed { color: #e5aaa1; border: 1px solid rgba(224, 140, 130, .18); background: rgba(224, 140, 130, .06); }
+
+/* --- Settings page --- */
+.settings-section { max-width: 640px; padding: 18px; border: 1px solid var(--border); border-radius: 15px; background: #111c16; margin-bottom: 14px; }
+.settings-section h3 { margin: 0 0 4px; font-size: 14px; }
+.settings-section p { margin: 0 0 14px; color: var(--muted); font-size: 10px; }
+.settings-section .button { margin-top: 6px; }
+
+/* --- Spinner --- */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(145, 212, 168, .2); border-top-color: var(--mint); border-radius: 50%; animation: spin .6s linear infinite; }
+.spinner-large { width: 28px; height: 28px; border-width: 3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Loading skeleton for cards --- */
+.skeleton-card { min-height: 140px; border: 1px solid var(--border); border-radius: 15px; background: linear-gradient(100deg, #101a14, #17251b, #101a14); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
+.skeleton-row { height: 42px; border-radius: 9px; background: linear-gradient(100deg, #101a14, #17251b, #101a14); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
+
+/* --- Textarea --- */
+.text-area { width: 100%; min-height: 80px; padding: 10px 12px; color: #e4ece5; border: 1px solid var(--border-strong); border-radius: 9px; outline: 0; background: #0d1711; font-size: 11px; line-height: 1.5; resize: vertical; transition: border-color .16s ease, box-shadow .16s ease; }
+.text-area::placeholder { color: #75837a; }
+.text-area:focus { border-color: rgba(145, 212, 168, .45); box-shadow: 0 0 0 3px rgba(145, 212, 168, .06); }
+
+/* --- Cafe dashboard responsive --- */
+@media (max-width: 900px) {
+  .order-queue { grid-template-columns: 1fr; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .cafe-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .cafe-stats-grid { grid-template-columns: 1fr; }
+  .cafe-menu-grid { grid-template-columns: 1fr; }
+  .analytics-grid { grid-template-columns: 1fr; }
+  .hours-day-row { flex-wrap: wrap; }
+  .hours-day-label { min-width: 100%; }
+  .inventory-table { display: block; overflow-x: auto; }
+  .toast-container { bottom: 16px; right: 16px; left: 16px; }
+  .toast { min-width: unset; }
+}
+
 @media (max-width: 1180px) {
   :root { --sidebar-width: 236px; }
   .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
