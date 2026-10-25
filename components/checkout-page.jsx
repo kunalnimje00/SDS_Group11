@@ -51,13 +51,13 @@ export function CheckoutPage() {
     );
   }
 
-  function placeOrder(event) {
+  async function placeOrder(event) {
     event.preventDefault();
     if (!destinationId) {
       setMessage("Please choose a campus pickup location to continue.");
       return;
     }
-    const order = placeDemoOrder(destinationId);
+    const order = await placeDemoOrder(destinationId);
     if (!order) {
       setMessage("Order could not be placed. Please check your cart items.");
       return;

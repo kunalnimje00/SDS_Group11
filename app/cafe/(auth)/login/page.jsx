@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight, RefreshCw, LogOut, ShieldCheck, Eye, EyeOff } from "lucide-react";
-import { useKantin } from "@/app/providers";
+import { useKantin } from "@/app/kantin-context";
 import { checkCafeStaffMembership } from "@/lib/cafe-auth";
 
 export default function CafeLoginPage() {
@@ -48,7 +48,7 @@ export default function CafeLoginPage() {
       const { isStaff, error } = await checkCafeStaffMembership();
       if (isStaff) { router.push("/cafe"); }
       else if (error === "not_authenticated") { setPendingAccess(false); setErrorMsg("Session expired. Please sign in again."); }
-      else { setRecheckMsg("Cafe access is still not set up for this account. Contact the administrator."); }
+      else { setRecheckMsg("This account still needs cafe setup. Continue below to finish."); }
     } catch (err) { setRecheckMsg(err.message || "Failed to check status."); }
     finally { setRecheckLoading(false); }
   }
@@ -85,13 +85,13 @@ export default function CafeLoginPage() {
               <p className="eyebrow auth-eyebrow">CAFETERIA ACCESS</p>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                 <div className="access-pending-icon" style={{ width: 44, height: 44, margin: 0 }}><ShieldCheck size={22} /></div>
-                <h2 style={{ margin: 0 }}>Cafe Access Not Set Up</h2>
+                <h2 style={{ margin: 0 }}>Finish Cafe Setup</h2>
               </div>
-              <p className="auth-description">This account is not assigned to a cafe. Contact the administrator to set up the cafe staff login.</p>
+              <p className="auth-description">This account has no cafe yet. Finish setup to create one and open the dashboard.</p>
               {recheckMsg && <p className="inline-info" role="status" style={{ marginBottom: 14 }}>{recheckMsg}</p>}
               {errorMsg && <p className="inline-error" role="alert" style={{ marginBottom: 14 }}>{errorMsg}</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 18 }}>
-                <button className="button button-primary button-full" type="button" onClick={handleRecheck} disabled={recheckLoading}>
+                <button className="button button-secondary button-full" type="button" onClick={handleRecheck} disabled={recheckLoading}>
                   <RefreshCw size={15} style={recheckLoading ? { animation: "spin 1s linear infinite" } : undefined} />
                   {recheckLoading ? "Checking access..." : "Check access"}
                 </button>

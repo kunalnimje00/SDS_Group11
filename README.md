@@ -1,7 +1,10 @@
-# Smart Cafeteria Ordering: Database & API Runbook
+# Smart Cafeteria Ordering System (Kantin)
 
-Supabase (PostgreSQL + Supabase Auth) schema, security model and RPC layer for the Smart Cafeteria Ordering System MVP (spec: *Database Schema SDS R2*).
+Kantin is a cafeteria ordering application for students and cafeteria staff, built with Next.js, React, and Supabase (PostgreSQL + Supabase Auth). This README provides a project overview and the database/API runbook for the MVP (spec: *Database Schema SDS R2*).
 
+- [Project overview and progress](#project-overview-and-progress)
+- [Cafeteria dashboard overview](<./CAFETERIA DASHBOARD.md>)
+- [Detailed cafeteria dashboard progress](./CAFETERIA_DASHBOARD_PROGRESS.md)
 - [1. Design in one page](#1-design-in-one-page)
 - [2. Repository layout](#2-repository-layout)
 - [3. Applying the migrations](#3-applying-the-migrations)
@@ -14,6 +17,33 @@ Supabase (PostgreSQL + Supabase Auth) schema, security model and RPC layer for t
 - [10. Deviations, additions and open items](#10-deviations-additions-and-open-items)
 
 ---
+
+## Project overview and progress
+
+Kantin brings student ordering and cafeteria operations together in one application:
+
+- **Student experience:** discover cafeterias and dishes, manage a cart, place orders, follow order status, review order history, and manage an account.
+- **Cafeteria operations:** manage incoming orders and fulfillment, maintain the menu and daily availability, configure operating hours, and review order history and analytics.
+- **Technology:** Next.js 16, React 19, Supabase Auth, PostgreSQL, and database RPC functions for protected operations.
+
+The cafeteria dashboard is implemented across staff registration and access, overview, order management, menu, inventory, hours, order history, analytics, and settings. Its detailed features and recorded build verification are in [CAFETERIA DASHBOARD.md](<./CAFETERIA DASHBOARD.md>) and [CAFETERIA_DASHBOARD_PROGRESS.md](./CAFETERIA_DASHBOARD_PROGRESS.md).
+
+### Run the application
+
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Apply the Supabase migrations as described in section 3 below.
+4. Start the development server with `npm run dev`.
+
+For student email OTP configuration, see [AUTH_SETUP.md](./AUTH_SETUP.md). Keep `.env.local` and any service-role credentials out of version control; only the public anon key belongs in the browser.
+
+### Current project status
+
+The repository includes student ordering workflows, cafeteria staff workflows, Supabase migrations, and a database validation checklist. The dashboard progress report records a successful production build with 26 routes generated. Before release or deployment, configure the target Supabase project, apply and validate its migrations, and smoke-test the main student and staff workflows.
+
+---
+
+## Database & API Runbook
 
 ## 1. Design in one page
 
@@ -47,6 +77,8 @@ supabase/
     20261020000600_rls_policies.sql                 table privileges + RLS policies
     20261024000100_one_staff_login_per_cafe.sql     enforce one cafe staff login per cafe
     20261024000200_public_cafe_registration.sql     create a cafe and first staff login at signup
+    20261024000300_complete_existing_cafe_signup.sql let an existing account finish cafe setup
+    20261025000100_cafe_staff_manage_menu.sql       let cafe staff manage their menu through authorized RPCs
   seed.sql                                          demo cafe, hours, menu, destinations
   tests/checklist.sql                               executable validation checklist
 README.md
@@ -70,7 +102,7 @@ For a local stack: `supabase start && supabase db reset` (applies migrations, th
 
 ### Option B: SQL editor
 
-Paste and run `0001` through `0008` in order, then `seed.sql`.
+Paste and run `0001` through `0010` in order, then `seed.sql`.
 
 ### Checks after applying
 
@@ -83,7 +115,7 @@ WHERE relnamespace = 'public'::regnamespace AND relkind = 'r' ORDER BY relname;
 SELECT grantee, table_name, privilege_type FROM information_schema.role_table_grants
 WHERE table_schema = 'public' AND grantee IN ('anon','authenticated') ORDER BY 2,1,3;
 
--- Functions callable by clients (should be exactly the 13 granted in 0005)
+-- Review the client-callable functions granted across the migrations
 SELECT p.oid::regprocedure FROM pg_proc p
 WHERE p.pronamespace = 'public'::regnamespace
   AND has_function_privilege('authenticated', p.oid, 'EXECUTE');
@@ -95,9 +127,9 @@ Then run the checklist (section 8), which verifies all of this behaviourally.
 
 ## 4. Cafe registration and staff access
 
-Anyone can register through `/cafe/register`. Each signup creates a new cafe and assigns the registering user as its only staff login. The auth trigger uses the cafe name from signup metadata and the new Auth user ID; the browser never writes to `cafes` or `cafe_staff` directly. Each cafe has one login; to change that login, use the trusted SQL editor/service-role admin path.
+Anyone can register through `/cafe/register`. Each signup creates a new cafe and assigns the registering user as its only staff login. The auth trigger uses the cafe name from signup metadata and the new Auth user ID. If an account was created before the registration trigger was installed, sign in and finish cafe setup on `/cafe/access-pending`; the `cafe_complete_registration` RPC creates a new cafe for the authenticated user without allowing the browser to write directly to `cafes` or `cafe_staff`. Each cafe has one login; to change that login, use the trusted SQL editor/service-role admin path.
 
-1. Apply migrations `0001` through `0008`.
+1. Apply migrations `0001` through `0010`.
 2. Open `/cafe/register`, enter the cafe name and account details, and submit.
 3. If Supabase requires email confirmation, confirm the email first. Then go to `/cafe/login` and sign in. If email confirmation is disabled for a local test project, signup signs in immediately.
 
@@ -120,7 +152,7 @@ ON CONFLICT (cafe_id) DO UPDATE SET user_id = EXCLUDED.user_id;
 
 **One cafe per staff member (MVP).** `/api/cafe/*` operations resolve "the caller's cafe" from `cafe_staff`. A user with two memberships gets `multiple_cafe_memberships` until one is removed.
 
-Other admin-only data (cafe settings such as `is_accepting_orders` and `timezone`, menu items, and destinations) has no client write path. Edit it via SQL editor or service role.
+Cafe staff can manage their own menu through the authenticated `cafe_add_menu_item`, `cafe_update_menu_item`, and `cafe_delete_menu_item` RPCs (migration `20261025000100`). Other admin-only data, including cafe settings such as `is_accepting_orders` and `timezone` and destinations, has no client write path; edit it through the SQL editor or service role.
 
 ---
 

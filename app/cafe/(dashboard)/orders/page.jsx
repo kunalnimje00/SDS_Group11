@@ -38,7 +38,7 @@ function getTimeAgo(dateStr) {
 }
 
 export default function CafeOrdersPage() {
-  const { orders, ordersLoading, refreshOrders } = useCafe();
+  const { orders, ordersLoading, refreshOrders, updateOrderStatus } = useCafe();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
@@ -63,10 +63,14 @@ export default function CafeOrdersPage() {
   const handleStatusChange = useCallback(async (orderId, toStatus, reason) => {
     setActionLoading(orderId);
     try {
-      const params = { p_order_id: orderId, p_to_status: toStatus };
-      if (reason) params.p_reason = reason;
-      const { data, error } = await supabase.rpc("cafe_set_order_status", params);
-      if (error) throw new Error(error.message);
+      if (updateOrderStatus) {
+        await updateOrderStatus(orderId, toStatus, reason);
+      } else {
+        const params = { p_order_id: orderId, p_to_status: toStatus };
+        if (reason) params.p_reason = reason;
+        const { error } = await supabase.rpc("cafe_set_order_status", params);
+        if (error) throw new Error(error.message);
+      }
       showToast(`Order updated to ${labelStatus(toStatus)}`);
       await refreshOrders();
     } catch (err) {
@@ -77,7 +81,7 @@ export default function CafeOrdersPage() {
       setConfirmDialog(null);
       setReasonInput("");
     }
-  }, [refreshOrders]);
+  }, [refreshOrders, updateOrderStatus]);
 
   const handleRemoveItem = useCallback(async (orderId, itemId, reason) => {
     setActionLoading(`${orderId}-${itemId}`);
@@ -126,7 +130,7 @@ export default function CafeOrdersPage() {
         {order.status === "pending" && (
           <>
             <button className="button button-accept button-small" disabled={actionLoading === order.id} onClick={() => handleStatusChange(order.id, "accepted")}>
-              <Check size={14} /> Accept
+              <Check size={14} /> Accept & Confirm
             </button>
             <button className="button button-reject button-small" disabled={actionLoading === order.id} onClick={() => openConfirm("reject", order.id, "rejected")}>
               <X size={14} /> Reject
