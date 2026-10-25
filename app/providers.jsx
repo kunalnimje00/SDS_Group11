@@ -1,14 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cafes, demoOrders, menuItems as initialMenuItems } from "@/lib/demo-data";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseConfigError } from "@/lib/supabase";
+import { KantinContext } from "./kantin-context";
 
 const CART_STORAGE_KEY = "kantin-cart-v1";
 const ORDER_STORAGE_KEY = "kantin-orders-v1";
 const MENU_STORAGE_KEY = "kantin-custom-menu-v1";
-
-const KantinContext = createContext(null);
 
 function readStoredCart() {
   if (typeof window === "undefined") return { cafeId: null, quantities: {} };
@@ -53,15 +52,18 @@ export function AppProviders({ children }) {
   // Supabase Auth state
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(() => Boolean(supabase));
 
   // Hydrate local state on mount
+  // Read browser storage after mount to keep server and initial client renders consistent.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setCart(readStoredCart());
     setLocalOrders(readStoredOrders());
     setMenuItems(readStoredMenu());
     setHydrated(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Save cart
   useEffect(() => {
@@ -86,6 +88,8 @@ export function AppProviders({ children }) {
 
   // Subscribe to Supabase Auth state changes
   useEffect(() => {
+    if (!supabase) return undefined;
+
     async function initAuth() {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -113,6 +117,8 @@ export function AppProviders({ children }) {
 
   // Auth actions
   const signIn = useCallback(async (email, password) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -122,6 +128,8 @@ export function AppProviders({ children }) {
   }, []);
 
   const signUp = useCallback(async (email, password, displayName, cafeName) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -136,7 +144,55 @@ export function AppProviders({ children }) {
     return data;
   }, []);
 
+  const verifyEmailOtp = useCallback(async (email, token) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "signup",
+    });
+    if (error) throw error;
+    return data;
+  }, []);
+
+  const resendEmailOtp = useCallback(async (email) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) throw error;
+  }, []);
+
+  const sendPasswordResetOtp = useCallback(async (email) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  }, []);
+
+  const verifyPasswordResetOtp = useCallback(async (email, token) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "recovery",
+    });
+    if (error) throw error;
+    return data;
+  }, []);
+
+  const updatePassword = useCallback(async (password) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
+    const { data, error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    return data;
+  }, []);
+
   const signOut = useCallback(async () => {
+    if (!supabase) throw new Error(supabaseConfigError);
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setUser(null);
@@ -253,6 +309,11 @@ export function AppProviders({ children }) {
     authLoading,
     signIn,
     signUp,
+    verifyEmailOtp,
+    resendEmailOtp,
+    sendPasswordResetOtp,
+    verifyPasswordResetOtp,
+    updatePassword,
     signOut,
     addItem,
     setQuantity,
@@ -272,6 +333,11 @@ export function AppProviders({ children }) {
     authLoading,
     signIn,
     signUp,
+    verifyEmailOtp,
+    resendEmailOtp,
+    sendPasswordResetOtp,
+    verifyPasswordResetOtp,
+    updatePassword,
     signOut,
     addItem,
     setQuantity,
@@ -284,10 +350,4 @@ export function AppProviders({ children }) {
   ]);
 
   return <KantinContext.Provider value={value}>{children}</KantinContext.Provider>;
-}
-
-export function useKantin() {
-  const context = useContext(KantinContext);
-  if (!context) throw new Error("useKantin must be used inside AppProviders");
-  return context;
 }
