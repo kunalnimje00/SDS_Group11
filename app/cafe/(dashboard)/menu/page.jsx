@@ -122,7 +122,7 @@ export default function CafeMenuPage() {
     } finally {
       setLoading(false);
     }
-  }, [cafeId, contextMenuItems]);
+  }, [cafeId, contextMenuItems, cafeName, registerCafe]);
 
   useEffect(() => {
     fetchMenu();
@@ -525,7 +525,7 @@ export default function CafeMenuPage() {
       ) : (
         <div className="cafe-menu-grid">
           {filteredItems.map((item, idx) => (
-            <div key={item.id} className="cafe-menu-card">
+            <div key={item.id ? `${item.id}-${idx}` : `dish-${idx}`} className="cafe-menu-card">
               <div className="cafe-menu-card-header">
                 <FoodPlaceholder name={item.name} index={idx} small />
                 <div className="cafe-menu-card-info" style={{ flex: 1, minWidth: 0 }}>

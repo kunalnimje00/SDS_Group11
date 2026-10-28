@@ -17,13 +17,5 @@ export default function CafeDashboardLayout({ children }) {
     }
   }, [user, authLoading, isCafeStaff, staffCheckLoading, router]);
 
-  if (authLoading || staffCheckLoading) {
-    return <div style={{ minHeight: "100vh", background: "var(--bg)" }} />;
-  }
-
-  if (!user || !isCafeStaff) {
-    return <div style={{ minHeight: "100vh", background: "var(--bg)" }} />;
-  }
-
   return <CafeShell>{children}</CafeShell>;
 }

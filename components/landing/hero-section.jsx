@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowDown, ArrowRight, Clock3, UtensilsCrossed } from "lucide-react";
 
 export function HeroSection() {
@@ -33,11 +34,13 @@ export function HeroSection() {
       </div>
       <div className="landing-hero-visual">
         <div className="landing-hero-photo-wrap">
-          <img
+          <Image
             className="landing-hero-photo"
             src="/landing/campus-meal-hero.jpg"
             alt="Illustrative Indian campus meal with rice, curries, and side dishes"
-            fetchPriority="high"
+            fill
+            priority
+            sizes="(max-width: 980px) 100vw, 50vw"
           />
           <div className="landing-photo-vignette" />
           <span className="landing-photo-tag">
