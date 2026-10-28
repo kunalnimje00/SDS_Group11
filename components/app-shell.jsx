@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, ChevronRight, CircleUserRound, ClipboardList, Menu, ShoppingBasket, UtensilsCrossed, X, LogIn } from "lucide-react";
+import { BookOpen, ChevronRight, CircleUserRound, ClipboardList, Menu, ShoppingBasket, UtensilsCrossed, X } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
 
 const navigation = [
-  { href: "/", label: "Home", icon: BookOpen },
+  { href: "/dashboard", label: "Home", icon: BookOpen },
   { href: "/cafes", label: "Browse canteens", icon: UtensilsCrossed },
   { href: "/cart", label: "My cart", icon: ShoppingBasket, cart: true },
   { href: "/orders", label: "My orders", icon: ClipboardList },
@@ -40,7 +40,7 @@ export function AppShell({ children }) {
     <div className="app-frame">
       <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`} aria-label="Student navigation">
         <div className="sidebar-brand-row">
-          <Link className="brand-lockup" href="/" onClick={closeMobile}>
+          <Link className="brand-lockup" href="/dashboard" onClick={closeMobile}>
             <KantinMark />
             <span className="brand-name">
               kantin<span className="brand-period">.</span>
@@ -53,7 +53,7 @@ export function AppShell({ children }) {
         <div className="sidebar-section-label">STUDENT SPACE</div>
         <nav className="side-nav">
           {navigation.map(({ href, label, icon: Icon, cart: isCart }) => {
-            const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+            const active = href === "/dashboard" ? pathname === "/dashboard" : pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link
                 key={href}
@@ -83,6 +83,9 @@ export function AppShell({ children }) {
           <p className="sidebar-demo-copy">Smart Cafeteria System</p>
           <Link href="/cafes" className="sidebar-demo-link" onClick={closeMobile}>
             Explore menu <ChevronRight size={14} />
+          </Link>
+          <Link href="/" className="sidebar-demo-link" onClick={closeMobile} style={{ marginTop: 4, opacity: 0.85 }}>
+            Public Homepage &rarr;
           </Link>
         </div>
         <Link
