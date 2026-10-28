@@ -14,6 +14,24 @@ export function StudentHome() {
     ? `Welcome back, ${user.user_metadata.display_name}`
     : "Your lunch break, better spent.";
 
+  // Guard: cafes haven't loaded from Supabase yet (or during static prerender)
+  if (!cafe) {
+    return (
+      <div className="page-stack dashboard-page">
+        <div className="home-welcome-row">
+          <div>
+            <p className="eyebrow">CAMPUS DINING EXPERIENCE</p>
+            <h1>{userGreeting}</h1>
+            <p className="home-lede">
+              Loading campus cafeteria…
+            </p>
+          </div>
+        </div>
+        <div className="skeleton-card" style={{ height: 200 }} />
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack dashboard-page">
       <div className="home-welcome-row">

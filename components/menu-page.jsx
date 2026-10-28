@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Clock3, Plus, Search, Settings, UtensilsCrossed, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, Clock3, Search, UtensilsCrossed, RefreshCw } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
 import { supabase } from "@/lib/supabase";
 import { MenuItemCard } from "./menu-item-card";
@@ -11,7 +11,7 @@ import { EmptyState, PageHeading } from "./ui";
 
 export function CafeMenuPage() {
   const params = useParams();
-  const { cafes, menuItems, updateMenuItem, addMenuItem, refreshCafesAndMenu } = useKantin();
+  const { cafes, menuItems, refreshCafesAndMenu } = useKantin();
   const cafeId = String(params.cafeId || "");
 
   // Resolve cafe
@@ -20,14 +20,6 @@ export function CafeMenuPage() {
   const [loading, setLoading] = useState(!activeCafe);
   const [query, setQuery] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
-  const [showManageModal, setShowManageModal] = useState(false);
-
-  // Form for adding/editing items
-  const [editingItem, setEditingItem] = useState(null);
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemDesc, setNewItemDesc] = useState("");
-  const [newItemPrice, setNewItemPrice] = useState("");
-  const [newItemPrep, setNewItemPrep] = useState("10");
 
   // Keep activeCafe in sync with cafes or fetch from Supabase
   useEffect(() => {
@@ -90,7 +82,7 @@ export function CafeMenuPage() {
 
   useEffect(() => {
     fetchCafeMenu();
-    const interval = setInterval(fetchCafeMenu, 5000);
+    const interval = setInterval(fetchCafeMenu, 15000);
     return () => clearInterval(interval);
   }, [fetchCafeMenu]);
 
@@ -118,44 +110,6 @@ export function CafeMenuPage() {
       (!availableOnly || item.is_available) &&
       `${item.name} ${item.description || ""}`.toLowerCase().includes(normalized)
   );
-
-  function handleSaveNewItem(e) {
-    e.preventDefault();
-    if (!newItemName.trim() || !newItemPrice || !cafe) return;
-
-    if (editingItem) {
-      updateMenuItem({
-        ...editingItem,
-        name: newItemName.trim(),
-        description: newItemDesc.trim(),
-        price_paise: Math.round(Number(newItemPrice) * 100),
-        prep_minutes: Number(newItemPrep) || 10,
-      });
-      setEditingItem(null);
-    } else {
-      addMenuItem({
-        cafe_id: cafe.id,
-        name: newItemName.trim(),
-        description: newItemDesc.trim(),
-        price_paise: Math.round(Number(newItemPrice) * 100),
-        prep_minutes: Number(newItemPrep) || 10,
-        is_available: true,
-      });
-    }
-
-    setNewItemName("");
-    setNewItemDesc("");
-    setNewItemPrice("");
-    setNewItemPrep("10");
-  }
-
-  function startEditItem(item) {
-    setEditingItem(item);
-    setNewItemName(item.name);
-    setNewItemDesc(item.description || "");
-    setNewItemPrice(String((item.price_paise || 0) / 100));
-    setNewItemPrep(String(item.prep_minutes || 10));
-  }
 
   if (loading) {
     return (
@@ -211,14 +165,6 @@ export function CafeMenuPage() {
               title="Refresh live menu"
             >
               <RefreshCw size={13} /> Refresh
-            </button>
-            <button
-              type="button"
-              className="button button-secondary button-small"
-              onClick={() => setShowManageModal(true)}
-              style={{ display: "inline-flex", gap: "6px" }}
-            >
-              <Settings size={14} /> Quick Add
             </button>
           </div>
         }
@@ -294,80 +240,6 @@ export function CafeMenuPage() {
             </button>
           }
         />
-      )}
-
-      {/* Quick Add Modal */}
-      {showManageModal && (
-        <div className="modal-overlay" onClick={() => setShowManageModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h2 style={{ margin: 0 }}>{editingItem ? "Edit Dish" : "Quick Add Dish"}</h2>
-              <button className="icon-button" onClick={() => setShowManageModal(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveNewItem} className="modal-form">
-              <div>
-                <label className="field-label">Dish Name *</label>
-                <input
-                  type="text"
-                  className="text-input"
-                  placeholder="e.g. Filter Coffee"
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
-                  required
-                />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>
-                  <label className="field-label">Price (₹) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="text-input"
-                    placeholder="e.g. 50"
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="field-label">Prep Time (min)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="text-input"
-                    placeholder="10"
-                    value={newItemPrep}
-                    onChange={(e) => setNewItemPrep(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="field-label">Description</label>
-                <textarea
-                  className="text-area"
-                  rows={2}
-                  placeholder="Dish description..."
-                  value={newItemDesc}
-                  onChange={(e) => setNewItemDesc(e.target.value)}
-                />
-              </div>
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="button button-secondary button-small"
-                  onClick={() => setShowManageModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="button button-primary button-small">
-                  {editingItem ? "Update Dish" : "Add to Menu"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   );

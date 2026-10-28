@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ClipboardList } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ClipboardList, RefreshCw } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
-import { destinations } from "@/lib/demo-data";
 import { OrderCard } from "./order-ui";
 import { EmptyState, PageHeading } from "./ui";
 
@@ -17,10 +16,19 @@ const FILTERS = [
 const activeStatuses = new Set(["pending", "accepted", "preparing", "ready", "out_for_delivery"]);
 
 export function OrdersPage() {
-  const { orders, cafes } = useKantin();
+  const { orders, ordersLoading, cafes, destinations, refreshOrders, user } = useKantin();
   const [filter, setFilter] = useState("all");
 
-  const filtered = orders.filter((order) =>
+  // Poll for order updates every 15 seconds while on this page
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      if (refreshOrders) refreshOrders();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [user, refreshOrders]);
+
+  const filtered = (orders || []).filter((order) =>
     filter === "all"
       ? true
       : filter === "active"
@@ -28,12 +36,42 @@ export function OrdersPage() {
       : !activeStatuses.has(order.status)
   );
 
+  if (!user) {
+    return (
+      <div className="page-stack">
+        <PageHeading eyebrow="STUDENT ORDERS" title="My orders" />
+        <EmptyState
+          icon={ClipboardList}
+          title="Sign in to view orders"
+          description="Your orders will appear here once you sign in."
+          action={
+            <Link href="/login" className="button button-primary">
+              Sign in
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="page-stack">
       <PageHeading
         eyebrow="STUDENT ORDERS"
         title="My orders"
         description="Follow live order status, preparation progress, and your order history."
+        action={
+          <button
+            type="button"
+            className="button button-secondary button-small"
+            onClick={() => refreshOrders && refreshOrders()}
+            disabled={ordersLoading}
+            style={{ display: "inline-flex", gap: "6px" }}
+          >
+            <RefreshCw size={13} className={ordersLoading ? "spinner" : ""} />
+            {ordersLoading ? "Refreshing…" : "Refresh"}
+          </button>
+        }
       />
 
       <div className="order-filter-row" role="tablist" aria-label="Filter orders">
@@ -51,14 +89,20 @@ export function OrdersPage() {
         ))}
       </div>
 
-      {filtered.length ? (
+      {ordersLoading && filtered.length === 0 ? (
+        <div style={{ display: "grid", gap: 10 }}>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-card" />
+          ))}
+        </div>
+      ) : filtered.length ? (
         <div className="orders-list">
           {filtered.map((order) => (
             <OrderCard
               key={order.id}
               order={order}
               cafe={cafes.find((entry) => entry.id === order.cafe_id)}
-              destination={destinations.find((entry) => entry.id === order.destination_id)}
+              destination={(destinations || []).find((entry) => entry.id === order.destination_id)}
             />
           ))}
         </div>

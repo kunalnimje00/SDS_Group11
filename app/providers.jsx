@@ -1,15 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { cafes as initialCafes, demoOrders, menuItems as initialMenuItems } from "@/lib/demo-data";
 import { supabase, supabaseConfigError } from "@/lib/supabase";
 import { KantinContext } from "./kantin-context";
 
 const CART_STORAGE_KEY = "kantin-cart-v1";
-const ORDER_STORAGE_KEY = "kantin-orders-v1";
-const MENU_STORAGE_KEY = "kantin-custom-menu-v1";
-const CAFES_STORAGE_KEY = "kantin-cafes-v1";
 
+// ─── Cart helpers (localStorage is fine for an unsent cart) ──────────
 function readStoredCart() {
   if (typeof window === "undefined") return { cafeId: null, quantities: {} };
   try {
@@ -24,92 +21,37 @@ function readStoredCart() {
   }
 }
 
-function readStoredOrders() {
-  if (typeof window === "undefined") return [];
-  try {
-    const value = JSON.parse(window.localStorage.getItem(ORDER_STORAGE_KEY) || "[]");
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
-}
-
-function readStoredMenu() {
-  if (typeof window === "undefined") return initialMenuItems;
-  try {
-    const value = JSON.parse(window.localStorage.getItem(MENU_STORAGE_KEY) || "null");
-    return Array.isArray(value) && value.length ? value : initialMenuItems;
-  } catch {
-    return initialMenuItems;
-  }
-}
-
-function readStoredCafes() {
-  if (typeof window === "undefined") return initialCafes;
-  try {
-    const value = JSON.parse(window.localStorage.getItem(CAFES_STORAGE_KEY) || "null");
-    if (Array.isArray(value) && value.length) {
-      const map = new Map();
-      initialCafes.forEach((c) => map.set(c.id, c));
-      value.forEach((c) => map.set(c.id, { ...map.get(c.id), ...c }));
-      return Array.from(map.values());
-    }
-    return initialCafes;
-  } catch {
-    return initialCafes;
-  }
-}
-
 export function AppProviders({ children }) {
+  // ─── Cart (localStorage-backed, harmless UI state) ─────────────
   const [cart, setCart] = useState({ cafeId: null, quantities: {} });
-  const [localOrders, setLocalOrders] = useState([]);
-  const [menuItems, setMenuItems] = useState(initialMenuItems);
-  const [cafes, setCafes] = useState(initialCafes);
   const [hydrated, setHydrated] = useState(false);
 
-  // Supabase Auth state
+  // ─── Supabase-backed data ──────────────────────────────────────
+  const [menuItems, setMenuItems] = useState([]);
+  const [cafes, setCafes] = useState([]);
+  const [destinations, setDestinations] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  // ─── Auth ──────────────────────────────────────────────────────
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(() => Boolean(supabase));
 
-  // Hydrate local state on mount
+  // ─── Hydrate cart from localStorage on mount ───────────────────
   useEffect(() => {
     setCart(readStoredCart());
-    setLocalOrders(readStoredOrders());
-    setMenuItems(readStoredMenu());
-    setCafes(readStoredCafes());
     setHydrated(true);
   }, []);
 
-  // Save cart
+  // Persist cart to localStorage
   useEffect(() => {
     if (hydrated) {
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     }
   }, [cart, hydrated]);
 
-  // Save local orders
-  useEffect(() => {
-    if (hydrated) {
-      window.localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(localOrders));
-    }
-  }, [localOrders, hydrated]);
-
-  // Save custom menu items
-  useEffect(() => {
-    if (hydrated) {
-      window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menuItems));
-    }
-  }, [menuItems, hydrated]);
-
-  // Save cafes
-  useEffect(() => {
-    if (hydrated) {
-      window.localStorage.setItem(CAFES_STORAGE_KEY, JSON.stringify(cafes));
-    }
-  }, [cafes, hydrated]);
-
-  // Subscribe to Supabase Auth state changes
+  // ─── Auth session management ───────────────────────────────────
   useEffect(() => {
     if (!supabase) return undefined;
 
@@ -138,88 +80,101 @@ export function AppProviders({ children }) {
     };
   }, []);
 
-  // Sync Cafes and Menu Items from Supabase in real-time
+  // ─── Fetch cafes and menu items from Supabase ──────────────────
   const refreshCafesAndMenu = useCallback(async () => {
     if (!supabase) return;
     try {
-      // 1. Fetch all cafes
       const { data: dbCafes, error: cErr } = await supabase.from("cafes").select("*");
-      if (!cErr && Array.isArray(dbCafes) && dbCafes.length > 0) {
-        setCafes((prev) => {
-          const map = new Map();
-          initialCafes.forEach((c) => map.set(c.id, c));
-          prev.forEach((c) => map.set(c.id, c));
-          dbCafes.forEach((c) => {
-            const existing = map.get(c.id);
-            map.set(c.id, {
-              ...existing,
-              ...c,
-              hours: existing?.hours || [
-                "Mon–Fri · 08:00–20:00",
-                "Sat · 09:00–16:00",
-              ],
-            });
-          });
-          const result = Array.from(map.values());
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem(CAFES_STORAGE_KEY, JSON.stringify(result));
-          }
-          return result;
-        });
+      if (!cErr && Array.isArray(dbCafes)) {
+        setCafes(dbCafes);
       }
 
-      // 2. Fetch all menu items
       const { data: dbItems, error: mErr } = await supabase.from("menu_items").select("*");
-      if (!mErr && Array.isArray(dbItems) && dbItems.length > 0) {
-        setMenuItems((prev) => {
-          const map = new Map();
-          prev.forEach((it) => map.set(it.id, it));
-          dbItems.forEach((it) => map.set(it.id, { ...map.get(it.id), ...it }));
-          const result = Array.from(map.values());
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(result));
-          }
-          return result;
-        });
+      if (!mErr && Array.isArray(dbItems)) {
+        setMenuItems(dbItems);
       }
     } catch (err) {
       console.warn("Could not sync cafes/menu with Supabase:", err);
     }
   }, []);
 
-  useEffect(() => {
-    refreshCafesAndMenu();
-    const interval = setInterval(refreshCafesAndMenu, 5000);
-    return () => clearInterval(interval);
-  }, [refreshCafesAndMenu]);
-
-  // Dynamically register a cafe (used when staff creates/logs into a cafe)
-  const registerCafe = useCallback((cafeObj) => {
-    if (!cafeObj?.id) return;
-    setCafes((prev) => {
-      const exists = prev.some((c) => c.id === cafeObj.id);
-      const updated = exists
-        ? prev.map((c) => (c.id === cafeObj.id ? { ...c, ...cafeObj } : c))
-        : [
-            ...prev,
-            {
-              ...cafeObj,
-              is_accepting_orders: cafeObj.is_accepting_orders ?? true,
-              is_active: cafeObj.is_active ?? true,
-              hours: cafeObj.hours || [
-                "Mon–Fri · 08:00–20:00",
-                "Sat · 09:00–16:00",
-              ],
-            },
-          ];
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(CAFES_STORAGE_KEY, JSON.stringify(updated));
+  // Fetch destinations from Supabase
+  const refreshDestinations = useCallback(async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase.from("destinations").select("*");
+      if (!error && Array.isArray(data)) {
+        setDestinations(data);
       }
-      return updated;
-    });
+    } catch (err) {
+      console.warn("Could not fetch destinations:", err);
+    }
   }, []);
 
-  // Auth actions
+  useEffect(() => {
+    refreshCafesAndMenu();
+    refreshDestinations();
+    const interval = setInterval(refreshCafesAndMenu, 15000);
+    return () => clearInterval(interval);
+  }, [refreshCafesAndMenu, refreshDestinations]);
+
+  // ─── Fetch student orders from Supabase ────────────────────────
+  const refreshOrders = useCallback(async () => {
+    if (!supabase || !user) {
+      setOrders([]);
+      return;
+    }
+    setOrdersLoading(true);
+    try {
+      // Fetch orders belonging to the authenticated student
+      const { data: dbOrders, error: oErr } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (oErr) {
+        console.error("Error fetching orders:", oErr.message);
+        setOrders([]);
+        setOrdersLoading(false);
+        return;
+      }
+
+      // Fetch order items for all returned orders
+      const orderIds = (dbOrders || []).map((o) => o.id);
+      let allItems = [];
+      if (orderIds.length > 0) {
+        const { data: dbItems, error: iErr } = await supabase
+          .from("order_items")
+          .select("*")
+          .in("order_id", orderIds);
+        if (!iErr && Array.isArray(dbItems)) {
+          allItems = dbItems;
+        }
+      }
+
+      // Merge items into orders
+      const ordersWithItems = (dbOrders || []).map((order) => ({
+        ...order,
+        items: allItems.filter((item) => item.order_id === order.id),
+      }));
+
+      setOrders(ordersWithItems);
+    } catch (err) {
+      console.error("Order fetch failed:", err);
+      setOrders([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [user]);
+
+  // Refresh orders when user changes (login/logout)
+  useEffect(() => {
+    if (!authLoading) {
+      refreshOrders();
+    }
+  }, [user, authLoading, refreshOrders]);
+
+  // ─── Auth actions ──────────────────────────────────────────────
   const signIn = useCallback(async (email, password) => {
     if (!supabase) throw new Error(supabaseConfigError);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -227,12 +182,18 @@ export function AppProviders({ children }) {
     return data;
   }, []);
 
-  const signUp = useCallback(async (email, password, displayName) => {
+  const signUp = useCallback(async (email, password, displayName, cafeName) => {
     if (!supabase) throw new Error(supabaseConfigError);
+    const metadata = { display_name: displayName };
+    // If cafeName is provided, mark this as a cafe signup so the DB trigger fires
+    if (cafeName) {
+      metadata.cafe_signup = "true";
+      metadata.cafe_name = cafeName;
+    }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: { data: metadata },
     });
     if (error) throw error;
     return data;
@@ -279,46 +240,35 @@ export function AppProviders({ children }) {
     if (error) throw error;
     setUser(null);
     setSession(null);
+    setOrders([]);
   }, []);
 
-  // Menu management
+  // ─── Menu management (local context updates after Supabase RPCs) ─
+  // These update local state optimistically; the actual Supabase write
+  // happens in the cafe dashboard pages via RPCs. The context versions
+  // are kept so the 5-second sync picks up changes.
   const updateMenuItem = useCallback((updatedItem) => {
     setMenuItems((current) => {
       const exists = current.some((it) => it.id === updatedItem.id);
-      const next = exists
+      return exists
         ? current.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item))
         : [...current, updatedItem];
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(next));
-      }
-      return next;
     });
   }, []);
 
   const addMenuItem = useCallback((newItem) => {
-    const id = newItem.id || window.crypto?.randomUUID?.() || `item-${Date.now()}`;
-    setMenuItems((current) => {
-      const next = [...current, { ...newItem, id }];
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(next));
-      }
-      return next;
-    });
+    const id = newItem.id || (typeof window !== "undefined" && window.crypto?.randomUUID?.()) || `item-${Date.now()}`;
+    setMenuItems((current) => [...current, { ...newItem, id }]);
   }, []);
 
   const deleteMenuItem = useCallback((itemId) => {
-    setMenuItems((current) => {
-      const next = current.filter((item) => item.id !== itemId);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(next));
-      }
-      return next;
-    });
+    setMenuItems((current) => current.filter((item) => item.id !== itemId));
   }, []);
 
-  // Cart actions
+  // ─── Cart actions ──────────────────────────────────────────────
   const addItem = useCallback((cafeId, itemId) => {
-    const resolvedCafeId = cafeId || cart.cafeId || cafes[0]?.id || "c0ffee00-0000-4000-8000-000000000001";
+    const resolvedCafeId = cafeId || cart.cafeId || cafes[0]?.id;
+    if (!resolvedCafeId) return;
     if (cart.cafeId && cart.cafeId !== resolvedCafeId) {
       const currentCafe = cafes.find((c) => c.id === cart.cafeId)?.name || "another cafe";
       const nextCafe = cafes.find((c) => c.id === resolvedCafeId)?.name || "this cafe";
@@ -355,9 +305,9 @@ export function AppProviders({ children }) {
 
   const clearCart = useCallback(() => setCart({ cafeId: null, quantities: {} }), []);
 
-  // Update order status
+  // ─── Update order status (local context, used by cafe providers) ─
   const updateOrderStatus = useCallback((orderId, nextStatus, reason) => {
-    setLocalOrders((current) =>
+    setOrders((current) =>
       current.map((order) => {
         if (order.id === orderId || order.order_number === orderId) {
           return {
@@ -372,80 +322,86 @@ export function AppProviders({ children }) {
     );
   }, []);
 
-  // Place order
-  const placeDemoOrder = useCallback(async (destinationId) => {
-    const cafe = cafes.find((entry) => entry.id === cart.cafeId) || cafes[0];
+  // ─── Place order via Supabase RPC ──────────────────────────────
+  const placeOrder = useCallback(async (destinationId) => {
+    if (!supabase) throw new Error(supabaseConfigError);
+    if (!user) throw new Error("You must be signed in to place an order.");
+
     const selectedItems = Object.entries(cart.quantities)
-      .map(([itemId, quantity]) => ({ item: menuItems.find((entry) => entry.id === itemId), quantity }))
-      .filter(({ item, quantity }) => item && item.is_available && quantity > 0);
-
-    if (!cafe || !selectedItems.length) return null;
-
-    const now = new Date().toISOString();
-    const id = window.crypto?.randomUUID?.() || `order-${Date.now()}`;
-    const orderNumber = `ORD-${String(Date.now()).slice(-6)}`;
-    const studentId = user?.id || "e0000000-0000-4000-8000-000000000001";
-    const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Student";
-
-    const order = {
-      id,
-      order_number: orderNumber,
-      student_id: studentId,
-      student_display_name: displayName,
-      cafe_id: cafe.id,
-      destination_id: destinationId,
-      status: "pending",
-      total_paise: selectedItems.reduce((sum, { item, quantity }) => sum + item.price_paise * quantity, 0),
-      idempotency_key: id,
-      estimated_ready_at: null,
-      estimated_delivery_at: null,
-      created_at: now,
-      updated_at: now,
-      items: selectedItems.map(({ item, quantity }, index) => ({
-        id: `${id}-${index + 1}`,
-        order_id: id,
-        menu_item_id: item.id,
-        item_name_snapshot: item.name,
-        unit_price_paise: item.price_paise,
+      .map(([itemId, quantity]) => ({
+        item: menuItems.find((entry) => entry.id === itemId),
         quantity,
-        line_total_paise: item.price_paise * quantity,
-        status: "included",
-      })),
-    };
+      }))
+      .filter(({ item, quantity }) => item && quantity > 0);
 
-    // If Supabase is available and user is authenticated, also invoke create_order RPC
-    if (supabase && user) {
-      try {
-        const p_items = selectedItems.map(({ item, quantity }) => ({
-          menu_item_id: item.id,
-          quantity,
-        }));
-        const { data, error } = await supabase.rpc("create_order", {
-          p_items,
-          p_destination_id: destinationId,
-          p_idempotency_key: id,
-        });
-        if (!error && data?.order) {
-          order.id = data.order.id;
-          order.order_number = data.order.order_number;
-        }
-      } catch (err) {
-        console.warn("Backend order creation fallback to local:", err);
-      }
+    if (!selectedItems.length) {
+      throw new Error("Your cart is empty. Add items before placing an order.");
     }
 
-    setLocalOrders((current) => [order, ...current]);
-    clearCart();
-    return order;
-  }, [cart, clearCart, menuItems, user, cafes]);
+    // Build the payload — only IDs and quantities; server will validate
+    const p_items = selectedItems.map(({ item, quantity }) => ({
+      menu_item_id: item.id,
+      quantity,
+    }));
 
+    // Generate an idempotency key to prevent duplicate orders on retry
+    const idempotencyKey = (typeof window !== "undefined" && window.crypto?.randomUUID?.()) || `order-${Date.now()}`;
+
+    const { data, error } = await supabase.rpc("create_order", {
+      p_items,
+      p_destination_id: destinationId || null,
+      p_idempotency_key: idempotencyKey,
+    });
+
+    if (error) {
+      // Map known error codes to user-friendly messages
+      const msg = error.message || "";
+      if (msg.includes("item_globally_unavailable") || msg.includes("item_unavailable_today")) {
+        throw new Error("One or more items are no longer available. Please review your cart.");
+      }
+      if (msg.includes("out_of_stock") || msg.includes("insufficient_stock")) {
+        throw new Error("Some items are out of stock. Please adjust quantities and try again.");
+      }
+      if (msg.includes("cafe_not_active") || msg.includes("cafe_not_accepting_orders") || msg.includes("cafe_closed")) {
+        throw new Error("This cafe is currently not accepting orders. Please try again later.");
+      }
+      if (msg.includes("destination_not_available")) {
+        throw new Error("The selected delivery destination is not available.");
+      }
+      throw new Error(msg || "Failed to place your order. Please try again.");
+    }
+
+    // Clear cart on success
+    clearCart();
+
+    // Refresh orders so the new order appears in My Orders
+    await refreshOrders();
+
+    // Return the order data from the RPC
+    return data?.order || data;
+  }, [cart, menuItems, user, clearCart, refreshOrders]);
+
+  // ─── Register cafe (updates local state for immediate display) ──
+  const registerCafe = useCallback((cafeObj) => {
+    if (!cafeObj?.id) return;
+    setCafes((prev) => {
+      const exists = prev.some((c) => c.id === cafeObj.id);
+      return exists
+        ? prev.map((c) => (c.id === cafeObj.id ? { ...c, ...cafeObj } : c))
+        : [...prev, { ...cafeObj }];
+    });
+  }, []);
+
+  // ─── Context value ─────────────────────────────────────────────
   const value = useMemo(() => ({
     cart,
     hydrated,
-    localOrders,
-    orders: [...localOrders, ...demoOrders],
+    orders,
+    ordersLoading,
+    localOrders: orders,
     menuItems,
     cafes,
+    destinations,
     user,
     session,
     authLoading,
@@ -461,19 +417,25 @@ export function AppProviders({ children }) {
     setQuantity,
     removeItem,
     clearCart,
-    placeDemoOrder,
+    placeOrder,
+    // Keep old name as alias so existing components don't break
+    placeDemoOrder: placeOrder,
     updateMenuItem,
     addMenuItem,
     deleteMenuItem,
     updateOrderStatus,
     registerCafe,
     refreshCafesAndMenu,
+    refreshOrders,
+    refreshDestinations,
   }), [
     cart,
     hydrated,
-    localOrders,
+    orders,
+    ordersLoading,
     menuItems,
     cafes,
+    destinations,
     user,
     session,
     authLoading,
@@ -489,13 +451,15 @@ export function AppProviders({ children }) {
     setQuantity,
     removeItem,
     clearCart,
-    placeDemoOrder,
+    placeOrder,
     updateMenuItem,
     addMenuItem,
     deleteMenuItem,
     updateOrderStatus,
     registerCafe,
     refreshCafesAndMenu,
+    refreshOrders,
+    refreshDestinations,
   ]);
 
   return <KantinContext.Provider value={value}>{children}</KantinContext.Provider>;

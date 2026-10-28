@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ClipboardList, Check, X, ChefHat, PackageCheck, Truck, CheckCircle, AlertTriangle, Clock, Search, Trash2 } from "lucide-react";
+import { ClipboardList, Check, X, ChefHat, PackageCheck, Truck, CheckCircle, AlertTriangle, Clock, Search, Trash2, Timer } from "lucide-react";
 import { PageHeading, StatusPill, EmptyState } from "@/components/ui";
 import { useCafe } from "@/app/cafe/providers";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +37,97 @@ function getTimeAgo(dateStr) {
   return `${hrs}h ${mins % 60}m ago`;
 }
 
+// ─── Inline ETA editor component ─────────────────────────────────────
+function EtaEditor({ order, onUpdate, disabled }) {
+  const [editing, setEditing] = useState(false);
+  const [etaMinutes, setEtaMinutes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Don't show ETA editor for final statuses
+  const isFinal = ["delivered", "cancelled", "rejected"].includes(order.status);
+  if (isFinal) return null;
+
+  async function handleSaveEta(e) {
+    e.preventDefault();
+    const mins = parseInt(etaMinutes, 10);
+    if (!mins || mins < 1) return;
+
+    setSaving(true);
+    try {
+      const readyAt = new Date(Date.now() + mins * 60000).toISOString();
+      const { error } = await supabase.rpc("cafe_set_order_eta", {
+        p_order_id: order.id,
+        p_estimated_ready_at: readyAt,
+      });
+      if (error) throw new Error(error.message);
+      if (onUpdate) onUpdate();
+      setEditing(false);
+      setEtaMinutes("");
+    } catch (err) {
+      console.error("ETA update failed:", err.message);
+      alert("Failed to set ETA: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const currentEta = order.estimated_ready_at;
+  const etaTime = currentEta ? new Date(currentEta) : null;
+  const minsLeft = etaTime ? Math.max(0, Math.round((etaTime - Date.now()) / 60000)) : null;
+
+  if (editing) {
+    return (
+      <form onSubmit={handleSaveEta} className="eta-editor" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
+        <Timer size={13} />
+        <span style={{ fontSize: 10, color: "var(--muted)", whiteSpace: "nowrap" }}>Ready in</span>
+        <input
+          type="number"
+          min="1"
+          max="180"
+          placeholder="min"
+          value={etaMinutes}
+          onChange={(e) => setEtaMinutes(e.target.value)}
+          style={{ width: 56, fontSize: 11, padding: "3px 6px", borderRadius: 4, border: "1px solid var(--border)" }}
+          autoFocus
+          disabled={saving}
+        />
+        <span style={{ fontSize: 10, color: "var(--muted)" }}>min</span>
+        <button type="submit" className="button button-primary button-small" style={{ fontSize: 10, padding: "2px 8px" }} disabled={saving || !etaMinutes}>
+          {saving ? "…" : "Set"}
+        </button>
+        <button type="button" className="button button-secondary button-small" style={{ fontSize: 10, padding: "2px 8px" }} onClick={() => setEditing(false)} disabled={saving}>
+          ✕
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <div className="eta-display" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+      <Timer size={13} style={{ color: "var(--muted)" }} />
+      {currentEta ? (
+        <>
+          <span style={{ fontSize: 10, color: minsLeft > 0 ? "var(--mint)" : "var(--muted)" }}>
+            ETA: {minsLeft > 0 ? `~${minsLeft} min` : "past due"} ({formatDateTime(currentEta)})
+          </span>
+        </>
+      ) : (
+        <span style={{ fontSize: 10, color: "var(--muted)" }}>No ETA set</span>
+      )}
+      <button
+        type="button"
+        className="button button-secondary button-small"
+        style={{ fontSize: 9, padding: "1px 6px" }}
+        onClick={() => setEditing(true)}
+        disabled={disabled}
+      >
+        {currentEta ? "Revise" : "Set ETA"}
+      </button>
+    </div>
+  );
+}
+
+// ─── Main page component ──────────────────────────────────────────────
 export default function CafeOrdersPage() {
   const { orders, ordersLoading, refreshOrders, updateOrderStatus } = useCafe();
   const [activeTab, setActiveTab] = useState("all");
@@ -217,6 +308,9 @@ export default function CafeOrdersPage() {
           <span>Order Total</span>
           <strong>{formatINR(order.total_paise)}</strong>
         </div>
+
+        {/* ETA editor — managers can set/revise estimated ready time */}
+        <EtaEditor order={order} onUpdate={refreshOrders} disabled={!!actionLoading} />
 
         {renderActions(order)}
       </div>

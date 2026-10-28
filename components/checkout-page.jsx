@@ -2,18 +2,35 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ArrowLeft, Check, ChevronDown, Clock3, MapPin, ShoppingBag } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ArrowLeft, Check, ChevronDown, Clock3, MapPin, ShoppingBag, AlertTriangle } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
-import { destinations } from "@/lib/demo-data";
 import { formatINR } from "@/lib/format";
 import { EmptyState, PageHeading } from "./ui";
 
 export function CheckoutPage() {
   const router = useRouter();
-  const { cart, hydrated, placeDemoOrder, cafes, menuItems, user } = useKantin();
-  const [destinationId, setDestinationId] = useState(destinations[0]?.id || "");
+  const { cart, hydrated, placeOrder, cafes, menuItems, destinations, user } = useKantin();
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const activeDestinations = useMemo(
+    () => (destinations || []).filter((entry) => entry.is_active),
+    [destinations]
+  );
+
+  // Default to counter/pickup destination (travel_minutes === 0) or first available
+  const defaultDestination = useMemo(() => {
+    const counter = activeDestinations.find(
+      (d) => d.travel_minutes === 0 || d.name?.toLowerCase().includes("counter")
+    );
+    return counter?.id || activeDestinations[0]?.id || "";
+  }, [activeDestinations]);
+
+  const [destinationId, setDestinationId] = useState("");
+
+  // Resolve effective destination: use selected, or default once destinations load
+  const effectiveDestinationId = destinationId || defaultDestination;
 
   if (!hydrated) {
     return (
@@ -51,21 +68,52 @@ export function CheckoutPage() {
     );
   }
 
-  async function placeOrder(event) {
+  if (!user) {
+    return (
+      <div className="page-stack">
+        <PageHeading eyebrow="ORDER CHECKOUT" title="Checkout" />
+        <EmptyState
+          icon={AlertTriangle}
+          title="Sign in required"
+          description="You need to sign in before placing an order."
+          action={
+            <Link href="/login" className="button button-primary">
+              Sign in
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  async function handlePlaceOrder(event) {
     event.preventDefault();
-    if (!destinationId) {
-      setMessage("Please choose a campus pickup location to continue.");
+    if (submitting) return;
+
+    if (!effectiveDestinationId) {
+      setMessage("Please select a pickup or delivery location.");
       return;
     }
-    const order = await placeDemoOrder(destinationId);
-    if (!order) {
-      setMessage("Order could not be placed. Please check your cart items.");
-      return;
+
+    setMessage("");
+    setSubmitting(true);
+    try {
+      const order = await placeOrder(effectiveDestinationId);
+      const orderId = order?.id || order?.order?.id;
+      if (orderId) {
+        router.push(`/orders/${orderId}`);
+      } else {
+        router.push("/orders");
+      }
+    } catch (err) {
+      setMessage(err.message || "Order could not be placed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    router.push(`/orders/${order.id}`);
   }
 
   const maxPrepMinutes = Math.max(...lines.map(({ item }) => item.prep_minutes || 10));
+  const selectedDest = activeDestinations.find((d) => d.id === effectiveDestinationId);
 
   return (
     <div className="page-stack">
@@ -78,7 +126,7 @@ export function CheckoutPage() {
         description="Verify your selected pickup spot and place your order."
       />
 
-      <form onSubmit={placeOrder} className="checkout-layout">
+      <form onSubmit={handlePlaceOrder} className="checkout-layout">
         <div className="checkout-main">
           <section className="checkout-section">
             <div className="checkout-section-title">
@@ -95,20 +143,18 @@ export function CheckoutPage() {
               <MapPin size={16} />
               <select
                 id="destination"
-                value={destinationId}
+                value={effectiveDestinationId}
                 onChange={(event) => {
                   setDestinationId(event.target.value);
                   setMessage("");
                 }}
+                required
               >
-                <option value="">Select a campus location</option>
-                {destinations
-                  .filter((entry) => entry.is_active)
-                  .map((entry) => (
-                    <option key={entry.id} value={entry.id}>
-                      {entry.name} · {entry.campus} · ~{entry.travel_minutes} min transit
-                    </option>
-                  ))}
+                {activeDestinations.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.name}{entry.campus ? ` · ${entry.campus}` : ""}{entry.travel_minutes ? ` · ~${entry.travel_minutes} min transit` : ""}
+                  </option>
+                ))}
               </select>
               <ChevronDown size={15} />
             </div>
@@ -168,19 +214,28 @@ export function CheckoutPage() {
               <Clock3 size={14} /> ~{maxPrepMinutes} min
             </span>
           </div>
+          {selectedDest && selectedDest.travel_minutes > 0 && (
+            <div className="summary-row">
+              <span>Delivery to {selectedDest.name}</span>
+              <span className="muted-value">
+                <MapPin size={14} /> ~{selectedDest.travel_minutes} min
+              </span>
+            </div>
+          )}
           <div className="summary-divider" />
           <div className="summary-row summary-total">
             <span>Total amount</span>
             <strong>{formatINR(subtotal)}</strong>
           </div>
+          <p className="summary-footnote" style={{ fontSize: 9, color: "var(--muted)" }}>
+            Final total is calculated by the server from authoritative menu prices.
+          </p>
           {message && <p className="inline-error" role="alert">{message}</p>}
-          <button type="submit" className="button button-primary button-full">
-            Confirm and place order <span>→</span>
+          <button type="submit" className="button button-primary button-full" disabled={submitting}>
+            {submitting ? "Placing order…" : "Confirm and place order"} <span>→</span>
           </button>
           <p className="summary-footnote">
-            {user
-              ? `Linked to student account: ${user.email}`
-              : "Placed as guest. Sign in to sync your order history."}
+            Linked to student account: {user.email}
           </p>
         </aside>
       </form>

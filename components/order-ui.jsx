@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { ArrowUpRight, ChevronRight, Clock3, MapPin } from "lucide-react";
-import { ORDER_STATUSES } from "@/lib/demo-data";
 import { formatDateTime, formatINR, labelStatus } from "@/lib/format";
+
+const ORDER_STATUSES = [
+  "pending",
+  "accepted",
+  "rejected",
+  "preparing",
+  "ready",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+];
 import { StatusPill } from "./ui";
 
 const PROGRESS_STATES = ["pending", "accepted", "preparing", "ready", "out_for_delivery", "delivered"];
