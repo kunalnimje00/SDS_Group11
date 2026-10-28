@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { ArrowRight, Check, Clock3, Minus, Plus, Search, ShoppingBag, Utensils } from "lucide-react";
 
@@ -125,8 +126,8 @@ export function StudentPreview() {
               <div className="student-menu-grid">
                 {visibleMenu.map((item) => (
                   <article className="student-menu-card" key={item.id}>
-                    <div className="student-menu-image">
-                      <img src={item.image} alt={item.alt} loading="lazy" />
+                    <div className="student-menu-image" style={{ position: "relative" }}>
+                      <Image src={item.image} alt={item.alt} fill sizes="(max-width: 600px) 100vw, 250px" style={{ objectFit: "cover" }} />
                       <span className="student-menu-category">{item.category}</span>
                     </div>
                     <div className="student-menu-copy">

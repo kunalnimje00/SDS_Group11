@@ -95,7 +95,7 @@ export function CafeProvider({ children }) {
     } finally {
       setStaffCheckLoading(false);
     }
-  }, [user]);
+  }, [user, registerCafe]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -227,6 +227,7 @@ export function CafeProvider({ children }) {
       addKantinMenuItem,
       updateKantinMenuItem,
       deleteKantinMenuItem,
+      registerCafe,
       kantinMenuItems,
     ]
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { ClipboardList, Check, X, ChefHat, PackageCheck, Truck, CheckCircle, AlertTriangle, Clock, Search, Trash2, Timer } from "lucide-react";
 import { PageHeading, StatusPill, EmptyState } from "@/components/ui";
 import { useCafe } from "@/app/cafe/providers";
@@ -27,9 +27,9 @@ const VALID_TRANSITIONS = {
   out_for_delivery: ["delivered"],
 };
 
-function getTimeAgo(dateStr) {
+function getTimeAgo(dateStr, currentTime = Date.now()) {
   if (!dateStr) return "";
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const diff = currentTime - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -42,6 +42,12 @@ function EtaEditor({ order, onUpdate, disabled }) {
   const [editing, setEditing] = useState(false);
   const [etaMinutes, setEtaMinutes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   // Don't show ETA editor for final statuses
   const isFinal = ["delivered", "cancelled", "rejected"].includes(order.status);
@@ -73,7 +79,7 @@ function EtaEditor({ order, onUpdate, disabled }) {
 
   const currentEta = order.estimated_ready_at;
   const etaTime = currentEta ? new Date(currentEta) : null;
-  const minsLeft = etaTime ? Math.max(0, Math.round((etaTime - Date.now()) / 60000)) : null;
+  const minsLeft = etaTime ? Math.max(0, Math.round((etaTime - now) / 60000)) : null;
 
   if (editing) {
     return (
@@ -137,6 +143,12 @@ export default function CafeOrdersPage() {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [reasonInput, setReasonInput] = useState("");
   const [viewMode, setViewMode] = useState("list"); // 'list' | 'queue'
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => { refreshOrders(); }, [refreshOrders]);
 
@@ -259,8 +271,8 @@ export default function CafeOrdersPage() {
 
   function renderOrderCard(order) {
     const items = order.items || [];
-    const waitTime = getTimeAgo(order.created_at);
-    const mins = order.created_at ? Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000) : 0;
+    const waitTime = getTimeAgo(order.created_at, now);
+    const mins = order.created_at ? Math.floor((now - new Date(order.created_at).getTime()) / 60000) : 0;
 
     return (
       <div key={order.id || order.order_number} className="cafe-order-card">

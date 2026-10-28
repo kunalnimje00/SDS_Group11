@@ -216,7 +216,7 @@ export function CafeMenuPage() {
         <div className="menu-grid">
           {filteredItems.map((item, index) => (
             <MenuItemCard
-              key={item.id}
+              key={item.id ? `${item.id}-${index}` : `menu-${index}`}
               item={{ ...item, cafe_id: cafe.id }}
               index={index}
             />
