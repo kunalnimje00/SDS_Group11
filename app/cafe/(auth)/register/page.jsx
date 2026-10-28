@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, CheckCircle, ShieldCheck } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default function CafeRegisterPage() {
   const router = useRouter();
@@ -88,6 +89,8 @@ export default function CafeRegisterPage() {
               <p className="eyebrow auth-eyebrow">CREATE A CAFE ACCOUNT</p>
               <h2>Register your cafe</h2>
               <p className="auth-description">Create a cafe and its first staff login. You will be able to sign in as soon as your account is ready.</p>
+              <GoogleSignInButton nextPath="/cafe/access-pending" label="Register with Google" />
+              <div className="auth-divider"><span />or register with email & password<span /></div>
               <form className="auth-form" onSubmit={handleRegister}>
                 <label className="field-label" htmlFor="cafe-register-owner">Your name</label>
                 <input className="text-input" id="cafe-register-owner" type="text" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required minLength={2} maxLength={100} />

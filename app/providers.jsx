@@ -234,6 +234,24 @@ export function AppProviders({ children }) {
     return data;
   }, []);
 
+  const signInWithGoogle = useCallback(async (nextPath = "/dashboard") => {
+    if (!supabase) throw new Error(supabaseConfigError);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    });
+    if (error) throw error;
+    return data;
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!supabase) throw new Error(supabaseConfigError);
     const { error } = await supabase.auth.signOut();
@@ -406,6 +424,7 @@ export function AppProviders({ children }) {
     session,
     authLoading,
     signIn,
+    signInWithGoogle,
     signUp,
     verifyEmailOtp,
     resendEmailOtp,
@@ -440,6 +459,7 @@ export function AppProviders({ children }) {
     session,
     authLoading,
     signIn,
+    signInWithGoogle,
     signUp,
     verifyEmailOtp,
     resendEmailOtp,

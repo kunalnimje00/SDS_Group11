@@ -6,6 +6,7 @@ import { ArrowRight, CircleUserRound, LogIn, LogOut, CheckCircle, Shield } from 
 import { useKantin } from "@/app/kantin-context";
 import { supabase, supabaseConfigError } from "@/lib/supabase";
 import { PageHeading } from "./ui";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 export function ProfilePage() {
   const { user, signOut } = useKantin();

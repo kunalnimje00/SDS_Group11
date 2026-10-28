@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, KeyRound, CheckCircle, ShieldCheck } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 const COEP_EMAIL_DOMAIN = "@coeptech.ac.in";
 const COEP_EMAIL_ERROR = "Enter your COEP email name before the fixed @coeptech.ac.in suffix.";
@@ -125,6 +126,11 @@ export function LoginPage() {
 
   return (
     <AuthFrame title="Good to see you." description="Sign in to your campus account to continue.">
+      <GoogleSignInButton nextPath="/dashboard" label="Continue with Google" />
+
+      <div className="auth-divider">
+        <span />or sign in with campus email<span />
+      </div>
       <form className="auth-form" onSubmit={handleLogin}>
         <CoepEmailField id="login-email" username={email} onChange={setEmail} />
 
@@ -414,6 +420,11 @@ export function RegisterPage() {
           </button>
         </form>
       ) : (
+        <>
+          <GoogleSignInButton nextPath="/dashboard" label="Sign up with Google" />
+          <div className="auth-divider">
+            <span />or register with campus email<span />
+          </div>
       <form className="auth-form" onSubmit={handleRegister}>
         <label className="field-label" htmlFor="register-name">
           Full name
@@ -462,6 +473,7 @@ export function RegisterPage() {
           {loading ? "Creating..." : "Create account"} <ArrowRight size={16} />
         </button>
       </form>
+      </>
       )}
 
       <p className="auth-switch">

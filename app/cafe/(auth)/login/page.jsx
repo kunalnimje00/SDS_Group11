@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight, RefreshCw, LogOut, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useKantin } from "@/app/kantin-context";
 import { checkCafeStaffMembership } from "@/lib/cafe-auth";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default function CafeLoginPage() {
   const router = useRouter();
@@ -104,6 +105,8 @@ export default function CafeLoginPage() {
               <p className="eyebrow auth-eyebrow">CAFETERIA ACCESS</p>
               <h2>Staff Sign In</h2>
               <p className="auth-description">Sign in to manage kitchen orders, daily schedules, and menu items.</p>
+              <GoogleSignInButton nextPath="/cafe" label="Continue with Google (Staff)" />
+              <div className="auth-divider"><span />or sign in with staff email<span /></div>
               <form className="auth-form" onSubmit={handleLogin}>
                 <label className="field-label" htmlFor="cafe-login-email">Staff email</label>
                 <input className="text-input" id="cafe-login-email" type="email" autoComplete="email" placeholder="staff@college.edu" value={email} onChange={(e) => setEmail(e.target.value)} required />
