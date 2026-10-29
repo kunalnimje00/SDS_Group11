@@ -1,4 +1,4 @@
-# Smart Cafeteria Ordering System (Kantin)
+Kantin:
 
 Kantin is a cafeteria ordering application for students and cafeteria staff, built with Next.js, React, and Supabase (PostgreSQL + Supabase Auth). This README provides a project overview and the database/API runbook for the MVP (spec: *Database Schema SDS R2*).
 
