@@ -1,38 +1,47 @@
 -- ============================================================================
--- SQL Script: Revamp Meta Canteen / COEP Cafe House Menu
--- Description: Standard SQL statements (pure DML).
---              Cleans up old menu records and inserts all 45 items.
--- Execute in: Supabase Dashboard -> SQL Editor (or psql)
+-- SQL Script: Remove Duplicate Cafe & Keep Only Original Meta Canteen
+-- Description:
+--   1. Deletes the extra cafe ('c0ffee00-0000-4000-8000-000000000001')
+--   2. Keeps the original Meta Canteen
+--   3. Attaches all 45 official menu items to the original Meta Canteen
+-- Execute in: Supabase Dashboard -> SQL Editor
 -- ============================================================================
 
--- 1. Ensure target cafe exists in cafes table
-INSERT INTO public.cafes (id, name, is_active, is_accepting_orders, timezone)
-VALUES ('c0ffee00-0000-4000-8000-000000000001', 'COEP Cafe House (Meta Canteen)', true, true, 'Asia/Kolkata')
-ON CONFLICT (id) DO UPDATE 
-SET name = 'COEP Cafe House (Meta Canteen)', is_active = true, is_accepting_orders = true;
-
--- 2. Clear dependent availability records for this cafe
-DELETE FROM public.menu_item_availability
-WHERE menu_item_id IN (
-  SELECT id FROM public.menu_items 
-  WHERE cafe_id IN (
-    SELECT id FROM public.cafes 
-    WHERE id = 'c0ffee00-0000-4000-8000-000000000001' 
-       OR lower(name) LIKE '%meta%' 
-       OR lower(name) LIKE '%coep%'
-  )
-);
-
--- 3. Clear existing menu items for this cafe
-DELETE FROM public.menu_items
-WHERE cafe_id IN (
+-- Step 1: Move any menu items from the duplicate cafe to the original Meta Canteen
+UPDATE public.menu_items
+SET cafe_id = (
   SELECT id FROM public.cafes 
-  WHERE id = 'c0ffee00-0000-4000-8000-000000000001' 
-     OR lower(name) LIKE '%meta%' 
-     OR lower(name) LIKE '%coep%'
+  WHERE id != 'c0ffee00-0000-4000-8000-000000000001' 
+    AND lower(name) LIKE '%meta%'
+  LIMIT 1
+)
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001'
+  AND EXISTS (
+    SELECT 1 FROM public.cafes 
+    WHERE id != 'c0ffee00-0000-4000-8000-000000000001' 
+      AND lower(name) LIKE '%meta%'
+  );
+
+-- Step 2: Delete any dependent records tied to the duplicate cafe
+DELETE FROM public.menu_item_availability 
+WHERE menu_item_id IN (
+  SELECT id FROM public.menu_items WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001'
 );
 
--- 4. Insert all 45 official COEP Cafe House items (prices in paise: 1 INR = 100 paise)
+DELETE FROM public.menu_items 
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
+
+DELETE FROM public.cafe_hours 
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
+
+DELETE FROM public.cafe_staff 
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
+
+-- Step 3: Delete the extra duplicate cafe itself
+DELETE FROM public.cafes 
+WHERE id = 'c0ffee00-0000-4000-8000-000000000001';
+
+-- Step 4: Ensure all 45 items are present in the original Meta Canteen
 INSERT INTO public.menu_items (cafe_id, name, description, price_paise, prep_minutes, category, is_available)
 SELECT 
   c.id, 
@@ -44,15 +53,7 @@ SELECT
   true
 FROM (
   SELECT id FROM public.cafes 
-  WHERE id = 'c0ffee00-0000-4000-8000-000000000001' 
-     OR lower(name) LIKE '%meta%' 
-     OR lower(name) LIKE '%coep%'
-  ORDER BY 
-    CASE 
-      WHEN lower(name) LIKE '%meta%' THEN 1 
-      WHEN lower(name) LIKE '%coep%' THEN 2 
-      ELSE 3 
-    END
+  WHERE lower(name) LIKE '%meta%' 
   LIMIT 1
 ) c
 CROSS JOIN (
@@ -127,15 +128,17 @@ CROSS JOIN (
     ('Samosa Chaat', 'Crushed samosa topped with chole, curd, and chutneys (Available after 3:30 PM)', 4000, 5, 'Evening Snacks (After 3:30 PM)'),
     ('Bhaji', 'Crisp piping hot onion pakoras / bhajji (Available after 3:30 PM)', 4000, 8, 'Evening Snacks (After 3:30 PM)'),
     ('Papdi Chaat', 'Crisp papdis layered with potatoes, chickpeas, curd and sweet tamarind (Available after 3:30 PM)', 4000, 5, 'Evening Snacks (After 3:30 PM)')
-) AS v(name, description, price_paise, prep_minutes, category);
+) AS v(name, description, price_paise, prep_minutes, category)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.menu_items m 
+  WHERE m.cafe_id = c.id AND m.name = v.name
+);
 
--- 5. Return the new menu count
+-- Step 5: Verify remaining canteens and confirm item counts
 SELECT 
+  c.id AS cafe_id, 
   c.name AS cafe_name, 
   count(m.id) AS total_menu_items
 FROM public.cafes c
-JOIN public.menu_items m ON m.cafe_id = c.id
-WHERE c.id = 'c0ffee00-0000-4000-8000-000000000001'
-   OR lower(c.name) LIKE '%meta%'
-   OR lower(c.name) LIKE '%coep%'
-GROUP BY c.name;
+LEFT JOIN public.menu_items m ON m.cafe_id = c.id
+GROUP BY c.id, c.name;
