@@ -1,13 +1,15 @@
 -- ============================================================================
 -- SQL Script: Remove Duplicate Cafe & Keep Only Original Meta Canteen
+-- Fixes: ERROR 23503 foreign key constraint orders_cafe_id_fkey on orders
 -- Description:
---   1. Deletes the extra cafe ('c0ffee00-0000-4000-8000-000000000001')
---   2. Keeps the original Meta Canteen
---   3. Attaches all 45 official menu items to the original Meta Canteen
+--   1. Reassigns existing orders & menu items from duplicate cafe to original Meta Canteen
+--   2. Cleans up any remaining foreign key references
+--   3. Deletes the duplicate cafe ('c0ffee00-0000-4000-8000-000000000001')
+--   4. Guarantees all 45 official menu items are on the original Meta Canteen
 -- Execute in: Supabase Dashboard -> SQL Editor
 -- ============================================================================
 
--- Step 1: Move any menu items from the duplicate cafe to the original Meta Canteen
+-- Step 1: Reassign menu items from duplicate cafe to the original Meta Canteen
 UPDATE public.menu_items
 SET cafe_id = (
   SELECT id FROM public.cafes 
@@ -22,7 +24,32 @@ WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001'
       AND lower(name) LIKE '%meta%'
   );
 
--- Step 2: Delete any dependent records tied to the duplicate cafe
+-- Step 2: Reassign any orders from duplicate cafe to the original Meta Canteen
+UPDATE public.orders
+SET cafe_id = (
+  SELECT id FROM public.cafes 
+  WHERE id != 'c0ffee00-0000-4000-8000-000000000001' 
+    AND lower(name) LIKE '%meta%'
+  LIMIT 1
+)
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001'
+  AND EXISTS (
+    SELECT 1 FROM public.cafes 
+    WHERE id != 'c0ffee00-0000-4000-8000-000000000001' 
+      AND lower(name) LIKE '%meta%'
+  );
+
+-- Step 3: Remove any leftover order records referencing the duplicate cafe (if not reassigned)
+DELETE FROM public.order_events 
+WHERE order_id IN (SELECT id FROM public.orders WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001');
+
+DELETE FROM public.order_items 
+WHERE order_id IN (SELECT id FROM public.orders WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001');
+
+DELETE FROM public.orders 
+WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
+
+-- Step 4: Clean up availability, menu items, hours, and staff for duplicate cafe
 DELETE FROM public.menu_item_availability 
 WHERE menu_item_id IN (
   SELECT id FROM public.menu_items WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001'
@@ -37,11 +64,11 @@ WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
 DELETE FROM public.cafe_staff 
 WHERE cafe_id = 'c0ffee00-0000-4000-8000-000000000001';
 
--- Step 3: Delete the extra duplicate cafe itself
+-- Step 5: Safely delete the extra duplicate cafe itself
 DELETE FROM public.cafes 
 WHERE id = 'c0ffee00-0000-4000-8000-000000000001';
 
--- Step 4: Ensure all 45 items are present in the original Meta Canteen
+-- Step 6: Ensure all 45 official menu items exist on your original Meta Canteen
 INSERT INTO public.menu_items (cafe_id, name, description, price_paise, prep_minutes, category, is_available)
 SELECT 
   c.id, 
@@ -134,7 +161,7 @@ WHERE NOT EXISTS (
   WHERE m.cafe_id = c.id AND m.name = v.name
 );
 
--- Step 5: Verify remaining canteens and confirm item counts
+-- Step 7: Verify final remaining canteens and menu count
 SELECT 
   c.id AS cafe_id, 
   c.name AS cafe_name, 
