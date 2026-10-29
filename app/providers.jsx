@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigError } from "@/lib/supabase";
+import { destinations as demoDestinations } from "@/lib/demo-data";
 import { KantinContext } from "./kantin-context";
 
 const CART_STORAGE_KEY = "kantin-cart-v1";
@@ -29,7 +30,7 @@ export function AppProviders({ children }) {
   // ─── Supabase-backed data ──────────────────────────────────────
   const [menuItems, setMenuItems] = useState([]);
   const [cafes, setCafes] = useState([]);
-  const [destinations, setDestinations] = useState([]);
+  const [destinations, setDestinations] = useState(demoDestinations);
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
@@ -103,7 +104,7 @@ export function AppProviders({ children }) {
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from("destinations").select("*");
-      if (!error && Array.isArray(data)) {
+      if (!error && Array.isArray(data) && data.length > 0) {
         setDestinations(data);
       }
     } catch (err) {
